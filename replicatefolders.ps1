@@ -4,7 +4,7 @@ param (
     [string]$LogFilePath
 )
 
-function Log-Message {
+function Backup-Message {
     param (
         [string]$Message
     )
@@ -22,7 +22,7 @@ $ReplicaPath = $ReplicaPath.TrimEnd('\')
 if (-not (Test-Path -Path $LogFilePath)) {
     try {
         New-Item -ItemType File -Force -Path $LogFilePath | Out-Null
-        Log-Message "INFO: Log file created at '$LogFilePath'."
+        Backup-Message "INFO: Log file created at '$LogFilePath'."
     }
     catch {
         Write-Error "ERROR: Failed to create log file at '$LogFilePath'. Exception: $_"
@@ -32,19 +32,19 @@ if (-not (Test-Path -Path $LogFilePath)) {
 
 # Validate source path
 if (-not (Test-Path -Path $SourcePath)) {
-    Log-Message "ERROR: Source path '$SourcePath' is missing."
+    Backup-Message "ERROR: Source path '$SourcePath' is missing."
     exit 1
 }
 
 # Validate or create replica path
 if (-not (Test-Path -Path $ReplicaPath)) {
-    Log-Message "INFO: Replica path '$ReplicaPath' is missing. Creating directory."
+    Backup-Message "INFO: Replica path '$ReplicaPath' is missing. Creating directory."
     try {
         New-Item -ItemType Directory -Force -Path $ReplicaPath | Out-Null
-        Log-Message "INFO: Replica directory '$ReplicaPath' created."
+        Backup-Message "INFO: Replica directory '$ReplicaPath' created."
     }
     catch {
-        Log-Message "ERROR: Failed to create replica directory '$ReplicaPath'. Exception: $_"
+        Backup-Message "ERROR: Failed to create replica directory '$ReplicaPath'. Exception: $_"
         exit 1
     }
 }
@@ -56,7 +56,7 @@ try {
     $replicaFiles = Get-ChildItem -Path $ReplicaPath -Recurse
 }
 catch {
-    Log-Message "ERROR: Failed to retrieve file lists. Exception: $_"
+    Backup-Message "ERROR: Failed to retrieve file lists. Exception: $_"
     exit 1
 }
 
@@ -71,21 +71,21 @@ foreach ($sourceFile in $sourceFiles) {
         if (-not (Test-Path -Path $replicaDir)) {
             try {
                 New-Item -ItemType Directory -Force -Path $replicaDir | Out-Null
-                Log-Message "INFO: Created directory '$replicaDir'."
-                Log-Message "INFO: Adding files to new directory '$replicaDir'."
+                Backup-Message "INFO: Created directory '$replicaDir'."
+                Backup-Message "INFO: Adding files to new directory '$replicaDir'."
             }
             catch {
-                Log-Message "ERROR: Failed to create directory '$replicaDir'. Exception: $_"
+                Backup-Message "ERROR: Failed to create directory '$replicaDir'. Exception: $_"
                 continue
             }
         }
         # Copy
         try {
             Copy-Item -Path $sourceFile.FullName -Destination $replicaFilePath -Force
-            Log-Message "Copied/Updated: $replicaFilePath"
+            Backup-Message "Copied/Updated: $replicaFilePath"
         }
         catch {
-            Log-Message "ERROR: Failed to copy $($sourceFile) to $replicaFilePath. Exception: $_"
+            Backup-Message "ERROR: Failed to copy $($sourceFile) to $replicaFilePath. Exception: $_"
             continue
         }
     }
@@ -102,13 +102,13 @@ foreach ($replicaFile in $replicaFiles) {
     if ((-not (Test-Path -Path $sourceFilePath)) -and (Test-Path -Path $replicaParentDir)) {
         try {
             Remove-Item -Path $replicaFile.FullName -Force -Recurse
-            Log-Message "Removed: $replicaFile"
+            Backup-Message "Removed: $replicaFile"
         }
         catch {
-            Log-Message "ERROR: Failed to remove $($replicaFile). Exception: $_"
+            Backup-Message "ERROR: Failed to remove $($replicaFile). Exception: $_"
             continue
         }
     }
 }
 
-Log-Message "Synchronization completed."
+Backup-Message "Synchronization completed."
